@@ -3,7 +3,6 @@ package com.minipay.order_service.service.impl;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.minipay.order_service.dto.CreateOrderRequest;
-import com.minipay.order_service.dto.PayRequest;
 import com.minipay.order_service.dto.UpdateStatusRequest;
 import com.minipay.order_service.enums.OrderStatus;
 import com.minipay.order_service.mapper.OrderMapper;
@@ -27,21 +26,17 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderVO createOrder(CreateOrderRequest request) {
-        // 生成业务订单号（UUID）
         String orderId = IdUtil.fastSimpleUUID();
-
         Order order = new Order();
         order.setOrderId(orderId);
         order.setOrderNo(request.getOrderNo());
         order.setAmount(request.getAmount());
         order.setStatus(OrderStatus.PENDING);
-        order.setUserId(1L);           // 临时固定用户，实际可从认证上下文获取
+        order.setUserId(1L);
         order.setCreateTime(LocalDateTime.now());
         order.setUpdateTime(LocalDateTime.now());
-
         orderMapper.insert(order);
         log.info("订单创建成功，orderId={}", orderId);
-
         return OrderVO.builder()
                 .orderId(orderId)
                 .orderNo(order.getOrderNo())
@@ -67,12 +62,9 @@ public class OrderServiceImpl implements OrderService {
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("无效的状态值");
         }
-
-        // 状态流转校验（简单版：只有 PENDING 可以转其他状态）
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new RuntimeException("订单状态不允许修改");
         }
-
         order.setStatus(targetStatus);
         if (request.getPayId() != null) {
             order.setPayId(request.getPayId());
@@ -80,30 +72,6 @@ public class OrderServiceImpl implements OrderService {
         order.setUpdateTime(LocalDateTime.now());
         orderMapper.updateById(order);
         log.info("订单状态更新成功，orderId={}, newStatus={}", orderId, targetStatus);
-    }
-
-    @Override
-    @Transactional
-    public String payOrder(String orderId, PayRequest request) {
-        Order order = getOrderByOrderId(orderId);
-        // 金额校验
-        if (order.getAmount().compareTo(request.getAmount()) != 0) {
-            throw new RuntimeException("支付金额与订单金额不匹配");
-        }
-        // 状态必须是 PENDING
-        if (order.getStatus() != OrderStatus.PENDING) {
-            throw new RuntimeException("订单状态不允许支付");
-        }
-
-        // 模拟支付处理：这里简单认为总是成功
-        String payId = IdUtil.fastSimpleUUID();  // 生成支付流水号
-        order.setStatus(OrderStatus.PAID);
-        order.setPayId(payId);
-        order.setUpdateTime(LocalDateTime.now());
-        orderMapper.updateById(order);
-
-        log.info("支付成功，orderId={}, payId={}", orderId, payId);
-        return payId;
     }
 
     private Order getOrderByOrderId(String orderId) {
