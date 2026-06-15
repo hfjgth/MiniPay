@@ -51,6 +51,10 @@ const formatAmount = (amount) => {
 const handleCreateOrder = () => {
     paymentStore.showCreateOrder = true
     paymentStore.orderForm = { orderNo: '', amount: '', description: '' }
+    // 重置支付状态，隐藏状态显示区域
+    paymentStore.paymentStatus = ''
+    paymentStore.currentOrderId = ''
+    paymentStore.showPayment = false
 }
 
 // 打开支付面板 + 校验表单
@@ -114,6 +118,8 @@ const handleConfirmPayment = async () => {
         console.error('支付异常：', err)
         // 支付异常时设置订单状态为FAILED
         paymentStore.paymentStatus = 'FAILED'
+        paymentStore.showPayment = false
+        paymentStore.showCreateOrder = false
     }
 }
 
@@ -221,7 +227,8 @@ const resetCreateOrder = () => {
 
                         <div v-if="currentOrderId" class="status-display">
                             <el-alert :title="`订单ID：${currentOrderId} 支付状态：${paymentStatus}`"
-                                :type="paymentStatus === 'SUCCESS' ? 'success' : 'info'" show-icon :closable="false" />
+                                :type="paymentStatus === 'PAID' || paymentStatus === 'SUCCESS' ? 'success' : (paymentStatus === 'FAILED' ? 'error' : 'info')"
+                                show-icon :closable="false" />
                         </div>
                     </div>
                 </el-tab-pane>
@@ -242,16 +249,14 @@ const resetCreateOrder = () => {
                             <el-descriptions :column="1" border>
                                 <el-descriptions-item label="订单ID">{{ queryResult.orderId }}</el-descriptions-item>
                                 <el-descriptions-item label="外部订单号">{{ queryResult.orderNo }}</el-descriptions-item>
-                                <el-descriptions-item label="订单金额">¥{{
-                                    formatAmount(queryResult.amount) }}</el-descriptions-item>
-                                <el-descriptions-item label="订单描述">{{ queryResult.description }}</el-descriptions-item>
-                                <el-descriptions-item label="支付流水号">{{ queryResult.payMethod ||
-                                    '暂无' }}</el-descriptions-item>
-                                <el-descriptions-item label="订单状态">
-                                    <el-tag :type="queryResult.tagType">
-                                        {{ queryResult.statusText }}
-                                    </el-tag>
-                                </el-descriptions-item>
+                                <el-descriptions-item label="订单金额">¥{{ formatAmount(queryResult.amount)
+                                    }}</el-descriptions-item>
+                                <!-- <el-descriptions-item label="订单描述">{{ queryResult.description }}</el-descriptions-item> -->
+                                <el-descriptions-item label="支付流水号">{{ queryResult.payMethod || '暂无'
+                                    }}</el-descriptions-item>
+                                <el-descriptions-item label="订单状态"><el-tag :type="queryResult.tagType">{{
+                                        queryResult.statusText
+                                        }}</el-tag></el-descriptions-item>
                             </el-descriptions>
                         </el-card>
 
