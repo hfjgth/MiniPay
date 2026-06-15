@@ -101,7 +101,9 @@ const handleConfirmPayment = async () => {
             payMethod: paymentForm.value.payMethod,
             amount: Number(paymentForm.value.amount)
         })
-        paymentStore.paymentStatus = payRes.status
+        // 状态转换：支付服务返回 SUCCESS/FAIL，转换为订单服务的 PAID/FAILED
+        const statusMap = { 'SUCCESS': 'PAID', 'FAIL': 'FAILED' }
+        paymentStore.paymentStatus = statusMap[payRes.status] || payRes.status
 
         ElMessage.success('支付请求已提交')
         paymentStore.showPayment = false
@@ -239,10 +241,10 @@ const resetCreateOrder = () => {
                                 <el-descriptions-item label="订单ID">{{ queryResult.orderId }}</el-descriptions-item>
                                 <el-descriptions-item label="外部订单号">{{ queryResult.orderNo }}</el-descriptions-item>
                                 <el-descriptions-item label="订单金额">¥{{
-                                    formatAmount(queryResult.amount)}}</el-descriptions-item>
+                                    formatAmount(queryResult.amount) }}</el-descriptions-item>
                                 <el-descriptions-item label="订单描述">{{ queryResult.description }}</el-descriptions-item>
                                 <el-descriptions-item label="支付流水号">{{ queryResult.payMethod ||
-                                    '暂无'}}</el-descriptions-item>
+                                    '暂无' }}</el-descriptions-item>
                                 <el-descriptions-item label="订单状态">
                                     <el-tag :type="queryResult.tagType">
                                         {{ queryResult.statusText }}
