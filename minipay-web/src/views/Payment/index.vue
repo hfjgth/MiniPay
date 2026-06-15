@@ -112,6 +112,8 @@ const handleConfirmPayment = async () => {
         const msg = err.message || ERROR_MSG[err.code] || '支付失败，请重试'
         ElMessage.error(msg)
         console.error('支付异常：', err)
+        // 支付异常时设置订单状态为FAILED
+        paymentStore.paymentStatus = 'FAILED'
     }
 }
 
