@@ -35,7 +35,11 @@ public class OrderServiceImpl implements OrderService {
         order.setUserId(1L);
         order.setCreateTime(LocalDateTime.now());
         order.setUpdateTime(LocalDateTime.now());
-        orderMapper.insert(order);
+        int rows = orderMapper.insert(order);
+        if (rows != 1) {
+            log.info("订单创建失败");
+            throw new RuntimeException("订单创建失败");
+        }
         log.info("订单创建成功，orderId={}", orderId);
         return OrderVO.builder()
                 .orderId(orderId)
