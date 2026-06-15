@@ -8,13 +8,13 @@ Content-Type: application/json
 }
 
 ### 2. 查询订单（把下面的 orderId 换成上一步返回的 orderId）
-GET http://localhost:8081/api/v1/orders/e26f981aab8e444aa1decdb619a6b93a
+GET http://localhost:8081/api/v1/orders/a24081fba74041149a274823a7821e84
 
-### 3. 发起支付
-POST http://localhost:8081/api/v1/orders/e26f981aab8e444aa1decdb619a6b93a/pay
+### 3. 更新订单状态（支付服务调用，也可手动测试）
+PUT http://localhost:8081/api/v1/orders/a24081fba74041149a274823a7821e84/status
 Content-Type: application/json
 
 {
-  "payMethod": "BALANCE",
-  "amount": 99.90
+  "status": "PAID",
+  "payId": "test_pay_123"
 }

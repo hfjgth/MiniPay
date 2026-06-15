@@ -31,6 +31,8 @@ public class GlobalExceptionHandler {
             return Result.error(103, msg);
         } else if (msg.contains("支付金额与订单金额不匹配")) {
             return Result.error(201, msg);
+        } else if (msg.contains("支付服务异常")) {      // 新增
+            return Result.error(202, msg);
         }
         return Result.error(500, msg);
     }
