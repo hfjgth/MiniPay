@@ -1,6 +1,4 @@
-USE `minipay`;
-
-CREATE TABLE `orders` (
+CREATE TABLE IF NOT EXISTS `orders` (
                           `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '自增主键',
                           `order_id` VARCHAR(32) NOT NULL COMMENT '业务订单号（UUID）',
                           `order_no` VARCHAR(64) NOT NULL COMMENT '调用方订单编号',

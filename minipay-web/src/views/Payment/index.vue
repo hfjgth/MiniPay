@@ -93,7 +93,7 @@ const handleConfirmPayment = async () => {
             amount: Number(orderForm.value.amount),
             description: orderForm.value.description
         })
-        const orderId = orderRes.data.orderId
+        const orderId = orderRes.orderId
         paymentStore.currentOrderId = orderId
 
         // 2. 发起支付
@@ -101,7 +101,7 @@ const handleConfirmPayment = async () => {
             payMethod: paymentForm.value.payMethod,
             amount: Number(paymentForm.value.amount)
         })
-        paymentStore.paymentStatus = payRes.data.status
+        paymentStore.paymentStatus = payRes.status
 
         ElMessage.success('支付请求已提交')
         paymentStore.showPayment = false
@@ -121,7 +121,7 @@ const handleQueryPayment = async () => {
     }
     try {
         const res = await getOrderDetail(queryOrderId.value)
-        const data = res.data
+        const data = res
         paymentStore.queryResult = {
             orderId: data.orderId,
             orderNo: data.orderNo,

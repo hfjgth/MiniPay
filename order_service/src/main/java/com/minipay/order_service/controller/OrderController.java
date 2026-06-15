@@ -2,7 +2,7 @@ package com.minipay.order_service.controller;
 
 import com.minipay.order_service.common.Result;
 import com.minipay.order_service.dto.CreateOrderRequest;
-import com.minipay.order_service.dto.PayRequest;
+
 import com.minipay.order_service.dto.UpdateStatusRequest;
 import com.minipay.order_service.service.OrderService;
 import com.minipay.order_service.vo.OrderVO;
