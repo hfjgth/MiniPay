@@ -40,31 +40,24 @@ public class PaymentController {
 
         PaymentService.PayResult result = paymentService.processPay(orderId, payMethod, amount);
 
+        int code;
+        String message;
+        if (result.isSuccess()) {
+            code = 0;
+            message = "支付成功";
+        } else if ("AMOUNT_MISMATCH".equals(result.getStatus())) {
+            code = 201;
+            message = "支付金额与订单金额不匹配";
+        } else {
+            code = 202;
+            message = "支付失败";
+        }
+
         return Map.of(
-                "code", result.isSuccess() ? 0 : 201,
-                "message", result.isSuccess() ? "支付成功" : "支付失败",
+                "code", code,
+                "message", message,
                 "data", Map.of("payId", result.getPayId(), "status", result.getStatus())
         );
     }
 
-    /**
-     * 3.3 支付状态更新
-     * PUT /api/v1/orders/{orderId}/status
-     */
-    @PutMapping("/{orderId}/status")
-    public Map<String, Object> updateStatus(
-            @PathVariable String orderId,
-            @RequestBody Map<String, Object> body) {
-
-        String status = (String) body.get("status");
-        String payId = (String) body.get("payId");
-
-        if (status == null || status.isBlank()) {
-            return Map.of("code", 101, "message", "参数校验失败：status 不能为空");
-        }
-
-        paymentService.updateStatus(orderId, status, payId);
-
-        return Map.of("code", 0, "message", "状态更新成功");
-    }
 }

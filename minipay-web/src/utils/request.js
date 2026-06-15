@@ -6,7 +6,7 @@ import { ERROR_CODE, ERROR_MSG } from '@/constants/error'
 // 创建 axios 实例
 const service = axios.create({
     // 后端网关基础地址，根据实际服务地址修改
-    baseURL: 'http://localhost:8081',
+    baseURL: 'http://localhost:8080',
     // 超时时间 5 秒
     timeout: 5000,
     // 统一请求头

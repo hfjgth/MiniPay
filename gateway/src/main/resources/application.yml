@@ -6,15 +6,22 @@ spring:
     name: gateway
   cloud:
     gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
       routes:
         # 发起支付 — 转发到支付服务
         - id: payment-pay
           uri: http://localhost:8082
           predicates:
             - Path=/api/v1/orders/*/pay
-        # 状态更新 — 转发到支付服务
+        # 状态更新 — 转发到订单服务
         - id: payment-status
-          uri: http://localhost:8082
+          uri: http://localhost:8081
           predicates:
             - Path=/api/v1/orders/*/status
         # 其余订单接口 — 转发到订单服务
