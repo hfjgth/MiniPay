@@ -1,6 +1,7 @@
 package com.minipay.payment.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -20,12 +21,24 @@ public class PaymentService {
     private final RestClient restClient;
     private final Map<String, OrderStatus> orderStore = new ConcurrentHashMap<>();
 
+    @Value("${app.order-service.url:http://localhost:8081}")
+    private String orderServiceUrl;
+
     public PaymentService() {
         this(RestClient.builder());
     }
 
     public PaymentService(RestClient.Builder restClientBuilder) {
         this.restClient = restClientBuilder.build();
+    }
+
+    // ========== 供测试使用的 getter 和 setter ==========
+    public String getOrderServiceUrl() {
+        return orderServiceUrl;
+    }
+
+    public void setOrderServiceUrl(String orderServiceUrl) {
+        this.orderServiceUrl = orderServiceUrl;
     }
 
     /**
@@ -37,7 +50,7 @@ public class PaymentService {
         // 校验金额是否与订单一致
         try {
             var response = restClient.get()
-                    .uri("http://localhost:8081/api/v1/orders/{orderId}", orderId)
+                    .uri(orderServiceUrl + "/api/v1/orders/{orderId}", orderId)
                     .retrieve()
                     .body(Map.class);
             if (response != null && response.get("data") instanceof Map data) {
@@ -53,7 +66,6 @@ public class PaymentService {
                 }
             }
         } catch (Exception e) {
-            // 订单服务不可用，跳过金额校验
             log.warn("订单服务查询失败，跳过金额校验，orderId={}，原因：{}", orderId, e.getMessage());
         }
 
@@ -70,13 +82,12 @@ public class PaymentService {
         String newStatus = success ? "PAID" : "FAILED";
         try {
             restClient.put()
-                    .uri("http://localhost:8081/api/v1/orders/{orderId}/status", orderId)
+                    .uri(orderServiceUrl + "/api/v1/orders/{orderId}/status", orderId)
                     .body(Map.of("status", newStatus, "payId", payId))
                     .retrieve()
                     .toBodilessEntity();
             log.info("订单状态同步成功，orderId={}，newStatus={}，payId={}", orderId, newStatus, payId);
         } catch (Exception e) {
-            // 订单服务未就绪，先存内存
             log.warn("订单状态同步失败，暂存内存，orderId={}，newStatus={}，payId={}，原因：{}",
                     orderId, newStatus, payId, e.getMessage());
             OrderStatus os = orderStore.getOrDefault(orderId, new OrderStatus());
@@ -88,7 +99,7 @@ public class PaymentService {
         return result;
     }
 
-    // ---- 内部类 ----
+    // ========== 内部类 ==========
 
     public static class PayResult {
         private String payId;

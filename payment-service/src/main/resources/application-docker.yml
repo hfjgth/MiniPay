@@ -4,3 +4,8 @@ server:
 spring:
   application:
     name: payment-service
+
+# 自定义配置：订单服务地址
+app:
+  order-service:
+    url: http://order-service:8081
