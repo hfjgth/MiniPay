@@ -1,0 +1,41 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+      routes:
+        # 发起支付 — 转发到支付服务
+        - id: payment-pay
+          uri: http://payment-service:8082   # ← localhost → payment-service
+          predicates:
+            - Path=/api/v1/orders/*/pay
+        # 状态更新 — 转发到订单服务
+        - id: payment-status
+          uri: http://order-service:8081     # ← localhost → order-service
+          predicates:
+            - Path=/api/v1/orders/*/status
+        # 其余订单接口 — 转发到订单服务
+        - id: order-service
+          uri: http://order-service:8081     # ← localhost → order-service
+          predicates:
+            - Path=/api/v1/orders/**
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.minipay.gateway: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+  file:
+    name: logs/gateway.lognotepad Dockerfile

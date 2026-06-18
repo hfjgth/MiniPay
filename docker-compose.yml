@@ -1,0 +1,77 @@
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: minipay-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: minipay
+    ports:
+      - "3307:3306"
+    networks:
+      - minipay-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 订单服务
+  order-service:
+    build:
+      context: ./order_service
+      dockerfile: Dockerfile
+    container_name: minipay-order
+    ports:
+      - "8081:8081"
+    depends_on:
+      mysql:
+        condition: service_healthy   # ← 等待 MySQL 健康检查通过
+    networks:
+      - minipay-network
+
+  # 支付服务
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: minipay-payment
+    ports:
+      - "8082:8082"
+    depends_on:
+      mysql:
+        condition: service_healthy   # ← 等待 MySQL 健康检查通过
+    networks:
+      - minipay-network
+
+  # 网关服务
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: minipay-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - order-service
+      - payment-service
+    networks:
+      - minipay-network
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./minipay-web
+      dockerfile: Dockerfile
+    container_name: minipay-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - gateway
+    networks:
+      - minipay-network
+
+networks:
+  minipay-network:
+    driver: bridge
