@@ -7,6 +7,7 @@ import com.minipay.order_service.model.Order;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @Transactional // 测试结束自动回滚，不污染数据库
 public class OrderMapperTest {
 
@@ -88,5 +90,48 @@ public class OrderMapperTest {
         Order after = orderMapper.selectById(id);
         assertEquals(OrderStatus.PAID, after.getStatus());
         assertEquals(order.getOrderNo(), after.getOrderNo());
+    }
+
+    // 测试删除订单
+    @Test
+    void testDeleteById() {
+        Order order = new Order();
+        String orderId = IdUtil.fastSimpleUUID();
+        order.setOrderId(orderId);
+        order.setOrderNo("DELETE_TEST_001");
+        order.setAmount(new BigDecimal("60.00"));
+        order.setStatus(OrderStatus.PENDING);
+        order.setUserId(1L);
+        order.setCreateTime(LocalDateTime.now());
+        order.setUpdateTime(LocalDateTime.now());
+        orderMapper.insert(order);
+
+        Long id = order.getId();
+        int rows = orderMapper.deleteById(id);
+        assertEquals(1, rows);
+        assertNull(orderMapper.selectById(id));
+    }
+
+    // 测试按订单号查询
+    @Test
+    void testSelectByOrderNo() {
+        Order order = new Order();
+        String orderId = IdUtil.fastSimpleUUID();
+        order.setOrderId(orderId);
+        order.setOrderNo("SELECT_NO_001");
+        order.setAmount(new BigDecimal("70.00"));
+        order.setStatus(OrderStatus.PENDING);
+        order.setUserId(1L);
+        order.setCreateTime(LocalDateTime.now());
+        order.setUpdateTime(LocalDateTime.now());
+        orderMapper.insert(order);
+
+        com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Order> wrapper =
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+        wrapper.eq(Order::getOrderNo, "SELECT_NO_001");
+        Order res = orderMapper.selectOne(wrapper);
+
+        assertNotNull(res);
+        assertEquals(orderId, res.getOrderId());
     }
 }

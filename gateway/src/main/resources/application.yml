@@ -29,3 +29,15 @@ spring:
           uri: http://localhost:8081
           predicates:
             - Path=/api/v1/orders/**
+
+logging:
+  level:
+    # Gateway核心日志（路由匹配、转发）
+    org.springframework.cloud.gateway: DEBUG
+    # 自定义日志包
+    com.minipay.gateway: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+  file:
+    name: logs/gateway.log # 日志文件路径

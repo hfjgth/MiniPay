@@ -53,6 +53,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderVO getOrderById(String orderId) {
         Order order = getOrderByOrderId(orderId);
+        log.info("订单查询成功，orderId={}", orderId);
         return convertToVO(order);
     }
 
@@ -83,6 +84,7 @@ public class OrderServiceImpl implements OrderService {
         wrapper.eq(Order::getOrderId, orderId);
         Order order = orderMapper.selectOne(wrapper);
         if (order == null) {
+            log.warn("订单查询失败，orderId={} 不存在", orderId);
             throw new RuntimeException("订单不存在");
         }
         return order;

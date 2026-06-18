@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -17,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 public class OrderControllerTest {
 
     @Autowired
@@ -108,5 +110,81 @@ public class OrderControllerTest {
         mockMvc.perform(get("/api/v1/orders/NO_SUCH_ID_123456"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(102));
+    }
+
+    // 6. 创建订单 - 空订单号
+    @Test
+    void testCreateOrderApi_BlankOrderNo() throws Exception {
+        CreateOrderRequest request = new CreateOrderRequest();
+        request.setOrderNo("");
+        request.setAmount(new BigDecimal("10.00"));
+
+        mockMvc.perform(post("/api/v1/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(101));
+    }
+
+    // 7. 创建订单 - 金额为零
+    @Test
+    void testCreateOrderApi_ZeroAmount() throws Exception {
+        CreateOrderRequest request = new CreateOrderRequest();
+        request.setOrderNo("API_003");
+        request.setAmount(BigDecimal.ZERO);
+
+        mockMvc.perform(post("/api/v1/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(101));
+    }
+
+    // 8. 更新不存在的订单状态
+    @Test
+    void testUpdateStatusApi_NotFound() throws Exception {
+        UpdateStatusRequest updateReq = new UpdateStatusRequest();
+        updateReq.setStatus("PAID");
+        updateReq.setPayId("PAY_API_002");
+
+        mockMvc.perform(put("/api/v1/orders/{id}/status", "NO_SUCH_ID_123456")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(102));
+    }
+
+    // 9. 非法状态流转（PENDING -> CLOSED）
+    @Test
+    void testUpdateStatusApi_IllegalStatus() throws Exception {
+        CreateOrderRequest createReq = new CreateOrderRequest();
+        createReq.setOrderNo("UPDATE_API_002");
+        createReq.setAmount(new BigDecimal("55.00"));
+
+        String resp = mockMvc.perform(post("/api/v1/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String orderId = objectMapper.readTree(resp).get("data").get("orderId").asText();
+
+        // 先更新为 PAID
+        UpdateStatusRequest updateReq = new UpdateStatusRequest();
+        updateReq.setStatus("PAID");
+        updateReq.setPayId("PAY_API_003");
+        mockMvc.perform(put("/api/v1/orders/{id}/status", orderId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0));
+
+        // 再次尝试更新为 CLOSED，应被禁止
+        updateReq.setStatus("CLOSED");
+        mockMvc.perform(put("/api/v1/orders/{id}/status", orderId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(103));
     }
 }

@@ -19,11 +19,11 @@ const service = axios.create({
  * 请求拦截器
  */
 service.interceptors.request.use((config) => {
-    // TODO 在发送请求之前做些什么
-    // 可在此处统一添加 token、请求头、参数处理等
+    // 记录请求日志，便于调试与问题排查
+    console.log(`[Request] ${config.method?.toUpperCase()} ${config.url}`, config.params || config.data || '')
     return config
 }, (error) => {
-    // TODO 对请求错误做些什么
+    console.error('[Request Error]', error)
     return Promise.reject(error)
 })
 
@@ -66,7 +66,8 @@ service.interceptors.response.use((response) => {
     // 所有异常统一 reject，让业务页面捕获
     return Promise.reject(resp)
 }, (error) => {
-    // TODO 对响应错误做点什么
+    // 网络错误或服务器异常统一记录
+    console.error('[Response Error]', error.message || error)
     return Promise.reject(error)
 }
 )

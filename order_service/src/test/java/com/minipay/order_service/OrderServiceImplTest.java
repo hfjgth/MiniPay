@@ -138,4 +138,37 @@ public class OrderServiceImplTest {
                 () -> orderService.getOrderById(orderId));
         Assertions.assertTrue(ex.getMessage().contains("订单不存在"));
     }
+
+    // 8. 更新状态 - 无效的状态枚举值
+    @Test
+    void testUpdateOrderStatus_InvalidStatusValue() {
+        String orderId = IdUtil.fastSimpleUUID();
+        Order mockOrder = new Order();
+        mockOrder.setOrderId(orderId);
+        mockOrder.setStatus(OrderStatus.PENDING);
+
+        UpdateStatusRequest request = new UpdateStatusRequest();
+        request.setStatus("NOT_A_STATUS");
+
+        when(orderMapper.selectOne(any())).thenReturn(mockOrder);
+        RuntimeException ex = Assertions.assertThrows(RuntimeException.class,
+                () -> orderService.updateOrderStatus(orderId, request));
+        Assertions.assertTrue(ex.getMessage().contains("无效的状态值"));
+    }
+
+    // 9. 正常创建订单 - 校验返回字段
+    @Test
+    void testCreateOrder_ResultFields() {
+        CreateOrderRequest request = new CreateOrderRequest();
+        request.setOrderNo("TEST_003");
+        request.setAmount(new BigDecimal("123.45"));
+
+        when(orderMapper.insert(any(Order.class))).thenReturn(1);
+        OrderVO result = orderService.createOrder(request);
+
+        Assertions.assertNotNull(result.getOrderId());
+        Assertions.assertEquals("TEST_003", result.getOrderNo());
+        Assertions.assertEquals(new BigDecimal("123.45"), result.getAmount());
+        Assertions.assertEquals(OrderStatus.PENDING.getCode(), result.getStatus());
+    }
 }
